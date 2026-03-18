@@ -1,7 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// ============================================================================
+// AI Dev Shop Platform - Prisma Schema
+// Covers all 23 PRDs
+// ============================================================================
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +10,993 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum Plan {
+  MONTHLY
+  ANNUAL
+  AGENCY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIALING
+  PAUSED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+enum AddOnType {
+  EXTRA_PROJECT_SLOT
+  PRIORITY_QUEUE
+}
+
+enum AddOnStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum MemberRole {
+  CLIENT
+  CTO
+  ADMIN
+}
+
+enum ProjectStatus {
+  DRAFT
+  BRIEF_SUBMITTED
+  SCOPING
+  ARCHITECTURE_REVIEW
+  ARCHITECTURE_APPROVED
+  IN_BUILD
+  IN_QA
+  IN_REVIEW
+  REVISION_REQUESTED
+  STAGING_REVIEW
+  DEPLOYED
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum FeatureCategory {
+  AUTHENTICATION
+  PAYMENTS
+  DATA_DISPLAY
+  AI_FEATURES
+  COMMUNICATION
+  ADMIN_PANEL
+  CUSTOM
+}
+
+enum ScopingStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  ESCALATED
+  FAILED
+  CANCELLED
+}
+
+enum ScopingPhase {
+  RESEARCH
+  ANALYZE
+  SCORE
+  GENERATE
+  DECIDE
+}
+
+enum ScopingDecision {
+  AUTO_APPROVED
+  ESCALATED
+  CTO_APPROVED
+  CTO_REJECTED
+  REVISION_REQUESTED
+}
+
+enum AgentType {
+  ORCHESTRATOR
+  ARCHITECT
+  FRONTEND
+  BACKEND
+  QA
+  SECURITY
+  DEVOPS
+  DESIGN
+}
+
+enum AgentStatus {
+  QUEUED
+  RUNNING
+  AWAITING_APPROVAL
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum StepStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum SandboxStatus {
+  PROVISIONING
+  READY
+  ACTIVE
+  SNAPSHOTTING
+  TERMINATED
+}
+
+enum GateType {
+  TEST_COVERAGE
+  SECURITY_SCAN
+  PERFORMANCE
+  ACCESSIBILITY
+  CTO_REVIEW
+  CLIENT_SIGNOFF
+}
+
+enum GateStatus {
+  PENDING
+  RUNNING
+  PASSED
+  FAILED
+  OVERRIDDEN
+}
+
+enum ReviewStatus {
+  PENDING
+  IN_PROGRESS
+  APPROVED
+  REVISION_REQUESTED
+}
+
+enum RevisionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum RevisionItemStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum DeploymentStatus {
+  QUEUED
+  BUILDING
+  DEPLOYING
+  LIVE
+  FAILED
+  ROLLED_BACK
+}
+
+enum DeploymentEnv {
+  STAGING
+  PRODUCTION
+}
+
+enum EscalationType {
+  HIGH_COMPLEXITY
+  BUDGET_OVERRUN
+  AGENT_FAILURE
+  CLIENT_ESCALATION
+  SECURITY_CRITICAL
+}
+
+enum EscalationStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum MemoryTier {
+  HOT
+  WARM
+  COLD
+}
+
+enum SkillSource {
+  PLATFORM
+  LEARNED
+  DYNAMIC
+}
+
+enum TemplateCategory {
+  SAAS
+  MARKETPLACE
+  LANDING_PAGE
+  ECOMMERCE
+  INTERNAL_TOOL
+  AI_APP
+}
+
+enum MessageSender {
+  CLIENT
+  CTO
+  SYSTEM
+  AGENT
+}
+
+enum NotificationType {
+  MILESTONE
+  APPROVAL_NEEDED
+  REVISION
+  DEPLOY
+  BILLING
+  SYSTEM
+}
+
+enum ReferralStatus {
+  PENDING
+  SIGNED_UP
+  SUBSCRIBED
+  CREDITED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+// ============================================================================
+// Models
+// ============================================================================
+
+// 1. Organization
+model Organization {
+  id                    String             @id @default(cuid())
+  clerkOrgId            String             @unique
+  name                  String
+  slug                  String             @unique
+  plan                  Plan
+  stripeCustomerId      String?            @unique
+  stripeSubscriptionId  String?            @unique
+  planExpiresAt         DateTime?
+  maxActiveProjects     Int                @default(1)
+  agentHoursLimit       Int                @default(0)
+  agentHoursUsed        Int                @default(0)
+  revisionRoundsUsed    Int                @default(0)
+  revisionRoundsLimit   Int                @default(0)
+  logoUrl               String?
+  primaryColor          String?
+  customDomain          String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  members        Member[]
+  subscriptions  Subscription[]
+  invoices       Invoice[]
+  addOns         AddOn[]
+  projects       Project[]
+  whiteLabel     WhiteLabel?
+  referralsGiven Referral[]
+
+  @@index([plan])
+}
+
+// 2. Member
+model Member {
+  id          String     @id @default(cuid())
+  clerkUserId String     @unique
+  orgId       String
+  role        MemberRole
+  email       String
+  name        String?
+  createdAt   DateTime   @default(now())
+
+  org                     Organization             @relation(fields: [orgId], references: [id])
+  notificationPreferences NotificationPreference[]
+  notifications           Notification[]
+
+  @@index([orgId])
+  @@index([role])
+}
+
+// 3. Subscription
+model Subscription {
+  id                   String             @id @default(cuid())
+  orgId                String
+  stripeSubscriptionId String             @unique
+  stripeCustomerId     String
+  stripePriceId        String
+  plan                 Plan
+  status               SubscriptionStatus
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+}
+
+// 4. Invoice
+model Invoice {
+  id              String        @id @default(cuid())
+  orgId           String
+  stripeInvoiceId String        @unique
+  amountCents     Int
+  status          InvoiceStatus
+  invoiceUrl      String?
+  periodStart     DateTime
+  periodEnd       DateTime
+  createdAt       DateTime      @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+}
+
+// 5. AddOn
+model AddOn {
+  id            String    @id @default(cuid())
+  orgId         String
+  type          AddOnType
+  stripeItemId  String?
+  stripePriceId String?
+  status        AddOnStatus
+  createdAt     DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+}
+
+// 6. Project
+model Project {
+  id                  String        @id @default(cuid())
+  orgId               String
+  name                String
+  slug                String
+  status              ProjectStatus @default(DRAFT)
+  brief               Json?
+  referenceUrls       String[]
+  stylePreference     String?
+  primaryColor        String?
+  designNotes         String?
+  integrationNotes    String?
+  complexityScore     Float?
+  complexityBreakdown Json?
+  estimatedDays       Int?
+  architecture        Json?
+  techStack           Json?
+  stagingUrl          String?
+  productionUrl       String?
+  repoUrl             String?
+  currentWizardStep   Int           @default(1)
+  submittedAt         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  org              Organization     @relation(fields: [orgId], references: [id])
+  features         ProjectFeature[]
+  scopingRuns      ScopingRun[]
+  agentRuns        AgentRun[]
+  sandboxSessions  SandboxSession[]
+  milestones       Milestone[]
+  statusHistory    StatusHistory[]
+  qualityGates     QualityGate[]
+  stagingReviews   StagingReview[]
+  revisions        Revision[]
+  deployments      Deployment[]
+  handoffDocuments HandoffDocument[]
+  escalations      Escalation[]
+  researchQueries  ResearchQuery[]
+  projectMemories  ProjectMemory[]
+  skillAssignments SkillAssignment[]
+  messages         ProjectMessage[]
+  portfolioItems   PortfolioItem[]
+  costAlerts       CostAlert[]
+
+  @@unique([orgId, slug])
+  @@index([orgId])
+  @@index([status])
+}
+
+// 7. ProjectFeature
+model ProjectFeature {
+  id          String          @id @default(cuid())
+  projectId   String
+  category    FeatureCategory
+  name        String
+  description String?
+  isCustom    Boolean         @default(false)
+  complexity  Int             @default(1)
+  createdAt   DateTime        @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([category])
+}
+
+// 8. ScopingRun
+model ScopingRun {
+  id                  String           @id @default(cuid())
+  projectId           String
+  status              ScopingStatus    @default(QUEUED)
+  phase               ScopingPhase?
+  workflowRunId       String?
+  analysis            Json?
+  complexityScore     Float?
+  complexityBreakdown Json?
+  architecture        Json?
+  decision            ScopingDecision?
+  decisionReason      String?
+  escalationNote      String?
+  ctoFeedback         String?
+  parentRunId         String?
+  model               String?
+  tokensUsed          Int              @default(0)
+  costCents           Int              @default(0)
+  startedAt           DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime         @default(now())
+
+  project           Project            @relation(fields: [projectId], references: [id])
+  parentRun         ScopingRun?        @relation("ScopingRunParent", fields: [parentRunId], references: [id])
+  childRuns         ScopingRun[]       @relation("ScopingRunParent")
+  researchArtifacts ResearchArtifact[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([parentRunId])
+}
+
+// 9. ResearchArtifact
+model ResearchArtifact {
+  id           String   @id @default(cuid())
+  scopingRunId String
+  query        String
+  source       String
+  results      Json?
+  summary      String?
+  createdAt    DateTime @default(now())
+
+  scopingRun ScopingRun @relation(fields: [scopingRunId], references: [id])
+
+  @@index([scopingRunId])
+}
+
+// 10. AgentRun
+model AgentRun {
+  id            String      @id @default(cuid())
+  projectId     String
+  milestoneId   String?
+  agentType     AgentType
+  status        AgentStatus @default(QUEUED)
+  input         Json?
+  output        Json?
+  model         String?
+  tokensUsed    Int         @default(0)
+  costCents     Int         @default(0)
+  durationMs    Int?
+  sandboxId     String?
+  workflowRunId String?
+  error         String?
+  retryCount    Int         @default(0)
+  parentRunId   String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+
+  project          Project           @relation(fields: [projectId], references: [id])
+  milestone        Milestone?        @relation(fields: [milestoneId], references: [id])
+  parentRun        AgentRun?         @relation("AgentRunParent", fields: [parentRunId], references: [id])
+  childRuns        AgentRun[]        @relation("AgentRunParent")
+  steps            AgentStep[]
+  toolLogs         AgentToolLog[]
+  skillAssignments SkillAssignment[]
+  costAlerts       CostAlert[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([agentType])
+  @@index([milestoneId])
+  @@index([parentRunId])
+}
+
+// 11. AgentStep
+model AgentStep {
+  id          String     @id @default(cuid())
+  runId       String
+  stepNumber  Int
+  description String?
+  toolName    String?
+  input       Json?
+  output      Json?
+  tokensUsed  Int        @default(0)
+  costCents   Int        @default(0)
+  durationMs  Int?
+  status      StepStatus
+  createdAt   DateTime   @default(now())
+
+  run AgentRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([status])
+}
+
+// 12. AgentToolLog
+model AgentToolLog {
+  id         String   @id @default(cuid())
+  runId      String
+  toolName   String
+  input      Json?
+  output     Json?
+  durationMs Int?
+  success    Boolean
+  error      String?
+  tokensUsed Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  run AgentRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+}
+
+// 13. SandboxSession
+model SandboxSession {
+  id          String        @id @default(cuid())
+  projectId   String
+  status      SandboxStatus @default(PROVISIONING)
+  provider    String        @default("vercel-sandbox")
+  externalId  String?
+  snapshotIds String[]
+  resources   Json?
+  expiresAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+}
+
+// 14. Milestone
+model Milestone {
+  id          String    @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  status      String    @default("PENDING")
+  weight      Int       @default(1)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  project   Project    @relation(fields: [projectId], references: [id])
+  agentRuns AgentRun[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+// 15. StatusHistory
+model StatusHistory {
+  id         String        @id @default(cuid())
+  projectId  String
+  fromStatus ProjectStatus
+  toStatus   ProjectStatus
+  changedBy  String?
+  reason     String?
+  createdAt  DateTime      @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+// 16. QualityGate
+model QualityGate {
+  id             String     @id @default(cuid())
+  projectId      String
+  type           GateType
+  status         GateStatus @default(PENDING)
+  score          Float?
+  threshold      Float?
+  details        Json?
+  overriddenBy   String?
+  overrideReason String?
+  runAt          DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime   @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+  @@index([type])
+}
+
+// 17. StagingReview
+model StagingReview {
+  id               String       @id @default(cuid())
+  projectId        String
+  status           ReviewStatus @default(PENDING)
+  stagingUrl       String?
+  lighthouseScores Json?
+  submittedAt      DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime     @default(now())
+
+  project     Project            @relation(fields: [projectId], references: [id])
+  annotations ReviewAnnotation[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+// 18. ReviewAnnotation
+model ReviewAnnotation {
+  id            String   @id @default(cuid())
+  reviewId      String
+  content       String
+  x             Float
+  y             Float
+  pageUrl       String?
+  screenshotUrl String?
+  resolved      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  review StagingReview @relation(fields: [reviewId], references: [id])
+
+  @@index([reviewId])
+}
+
+// 19. Revision
+model Revision {
+  id          String         @id @default(cuid())
+  projectId   String
+  roundNumber Int
+  status      RevisionStatus @default(PENDING)
+  submittedAt DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+
+  project Project        @relation(fields: [projectId], references: [id])
+  items   RevisionItem[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+// 20. RevisionItem
+model RevisionItem {
+  id            String             @id @default(cuid())
+  revisionId    String
+  description   String
+  category      String?
+  status        RevisionItemStatus @default(PENDING)
+  agentRunId    String?
+  screenshotUrl String?
+  resolution    String?
+  createdAt     DateTime           @default(now())
+
+  revision Revision @relation(fields: [revisionId], references: [id])
+
+  @@index([revisionId])
+  @@index([status])
+}
+
+// 21. Deployment
+model Deployment {
+  id                 String           @id @default(cuid())
+  projectId          String
+  environment        DeploymentEnv
+  status             DeploymentStatus @default(QUEUED)
+  vercelDeploymentId String?
+  url                String?
+  commitSha          String?
+  buildLogs          Json?
+  healthCheckPassed  Boolean?
+  lighthouseScores   Json?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime         @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+  @@index([environment])
+}
+
+// 22. HandoffDocument
+model HandoffDocument {
+  id            String   @id @default(cuid())
+  projectId     String
+  content       Json?
+  repoUrl       String?
+  stagingUrl    String?
+  productionUrl String?
+  envVars       Json?
+  techStack     Json?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+// 23. Escalation
+model Escalation {
+  id          String           @id @default(cuid())
+  projectId   String
+  type        EscalationType
+  status      EscalationStatus @default(OPEN)
+  title       String
+  description String?
+  priority    Int              @default(0)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+  @@index([type])
+}
+
+// 24. NotificationPreference
+model NotificationPreference {
+  id        String           @id @default(cuid())
+  memberId  String
+  type      NotificationType
+  email     Boolean          @default(true)
+  inApp     Boolean          @default(true)
+  slack     Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+}
+
+// 25. ResearchQuery
+model ResearchQuery {
+  id        String   @id @default(cuid())
+  projectId String
+  query     String
+  source    String
+  results   Json?
+  summary   String?
+  costCents Int      @default(0)
+  cached    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+// 26. ProjectMemory
+model ProjectMemory {
+  id             String      @id @default(cuid())
+  projectId      String
+  tier           MemoryTier
+  key            String
+  value          Json?
+  embedding      String?
+  score          Float?
+  accessCount    Int         @default(0)
+  lastAccessedAt DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project   Project           @relation(fields: [projectId], references: [id])
+  analytics MemoryAnalytics[]
+
+  @@index([projectId])
+  @@index([tier])
+  @@index([key])
+}
+
+// 27. MemoryAnalytics
+model MemoryAnalytics {
+  id        String   @id @default(cuid())
+  memoryId  String
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  memory ProjectMemory @relation(fields: [memoryId], references: [id])
+
+  @@index([memoryId])
+}
+
+// 28. AgentSkill
+model AgentSkill {
+  id            String      @id @default(cuid())
+  name          String      @unique
+  description   String?
+  source        SkillSource
+  content       String?
+  tags          String[]
+  matchKeywords String[]
+  successRate   Float       @default(0)
+  usageCount    Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  assignments SkillAssignment[]
+
+  @@index([source])
+}
+
+// 29. SkillAssignment
+model SkillAssignment {
+  id         String   @id @default(cuid())
+  skillId    String
+  agentRunId String
+  projectId  String
+  matchScore Float
+  createdAt  DateTime @default(now())
+
+  skill    AgentSkill @relation(fields: [skillId], references: [id])
+  agentRun AgentRun   @relation(fields: [agentRunId], references: [id])
+  project  Project    @relation(fields: [projectId], references: [id])
+
+  @@index([skillId])
+  @@index([agentRunId])
+  @@index([projectId])
+}
+
+// 30. ProjectTemplate
+model ProjectTemplate {
+  id            String           @id @default(cuid())
+  name          String
+  slug          String           @unique
+  description   String?
+  category      TemplateCategory
+  features      Json?
+  architecture  Json?
+  estimatedDays Int?
+  thumbnail     String?
+  usageCount    Int              @default(0)
+  successRate   Float            @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([category])
+}
+
+// 31. ProjectMessage
+model ProjectMessage {
+  id            String        @id @default(cuid())
+  projectId     String
+  senderId      String?
+  senderType    MessageSender
+  content       String
+  attachments   Json?
+  isAiGenerated Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([senderType])
+}
+
+// 32. Notification
+model Notification {
+  id        String           @id @default(cuid())
+  memberId  String
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([read])
+  @@index([type])
+}
+
+// 33. WhiteLabel
+model WhiteLabel {
+  id              String   @id @default(cuid())
+  orgId           String   @unique
+  companyName     String?
+  logoUrl         String?
+  primaryColor    String?
+  accentColor     String?
+  customDomain    String?
+  customFonts     Json?
+  emailFromName   String?
+  emailFromDomain String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id])
+}
+
+// 34. Referral
+model Referral {
+  id            String         @id @default(cuid())
+  referrerOrgId String
+  refereeEmail  String
+  status        ReferralStatus @default(PENDING)
+  creditCents   Int            @default(0)
+  referralCode  String         @unique
+  signedUpAt    DateTime?
+  subscribedAt  DateTime?
+  creditedAt    DateTime?
+  createdAt     DateTime       @default(now())
+
+  referrerOrg Organization @relation(fields: [referrerOrgId], references: [id])
+
+  @@index([referrerOrgId])
+  @@index([status])
+  @@index([referralCode])
+}
+
+// 35. PortfolioItem
+model PortfolioItem {
+  id             String   @id @default(cuid())
+  projectId      String
+  title          String
+  description    String?
+  thumbnailUrl   String?
+  liveUrl        String?
+  techStack      String[]
+  isPublic       Boolean  @default(false)
+  clientApproved Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([isPublic])
+}
+
+// 36. CostAlert
+model CostAlert {
+  id                String        @id @default(cuid())
+  projectId         String
+  agentRunId        String?
+  severity          AlertSeverity
+  title             String
+  description       String?
+  expectedCostCents Int?
+  actualCostCents   Int?
+  acknowledged      Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  project  Project   @relation(fields: [projectId], references: [id])
+  agentRun AgentRun? @relation(fields: [agentRunId], references: [id])
+
+  @@index([projectId])
+  @@index([agentRunId])
+  @@index([severity])
 }
