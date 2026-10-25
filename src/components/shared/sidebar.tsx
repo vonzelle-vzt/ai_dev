@@ -4,10 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs"
-import {
-  LayoutDashboard, FolderKanban, CreditCard, Settings,
-  Bot, Shield, BarChart3, MessageSquare, Zap,
-} from "lucide-react"
+import { LayoutDashboard, FolderKanban, CreditCard, Settings, Bot, Shield, BarChart3, Zap } from "lucide-react"
 
 const clientNav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },

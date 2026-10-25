@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, Clock, Rocket, Globe, GitBranch, ExternalLink, Shield, Gauge } from "lucide-react"
+import { CheckCircle2, Rocket, Globe, GitBranch, ExternalLink, Shield } from "lucide-react"
 
 const deploySteps = [
   { label: "Build", status: "COMPLETED", detail: "Next.js build successful (42s)" },
@@ -12,9 +11,7 @@ const deploySteps = [
   { label: "DNS Propagation", status: "COMPLETED", detail: "Custom domain active" },
 ]
 
-export default async function DeployPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-
+export default function DeployPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -66,7 +63,7 @@ export default async function DeployPage({ params }: { params: Promise<{ id: str
           <CardTitle className="text-lg">Deployment Progress</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {deploySteps.map((step, i) => (
+          {deploySteps.map((step) => (
             <div key={step.label} className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
               <div className="flex-1">

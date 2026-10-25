@@ -1,7 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { CheckCircle2, XCircle, Clock, Shield, TestTube2, Gauge, Eye, AlertTriangle } from "lucide-react"
 
 const gates = [
@@ -20,9 +19,7 @@ const statusConfig: Record<string, { color: string; icon: typeof CheckCircle2 }>
   RUNNING: { color: "bg-blue-500/10 text-blue-400", icon: Clock },
 }
 
-export default async function QualityGatesPage({ params }: { params: Promise<{ projectId: string }> }) {
-  const { projectId } = await params
-
+export default function QualityGatesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

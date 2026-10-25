@@ -1,19 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { PrismaClient } from "@/generated/prisma/client"
 
-const globalForPrisma = globalThis as unknown as { prisma: any }
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 function createPrismaClient() {
-  // Lazy import to avoid build-time instantiation errors
-  // Prisma 7 requires adapter configuration at runtime
-  const { PrismaClient } = require("@/generated/prisma/client")
-  return new PrismaClient()
+  // Prisma 7 requires adapter configuration at runtime; the generated
+  // constructor demands options, so keep the original zero-arg call
+  return new (PrismaClient as unknown as new () => PrismaClient)()
 }
 
-export const db: any = new Proxy({} as any, {
+// Instantiate lazily to avoid build-time instantiation errors
+export const db = new Proxy({} as PrismaClient, {
   get(_target, prop) {
     if (!globalForPrisma.prisma) {
       globalForPrisma.prisma = createPrismaClient()
     }
-    return globalForPrisma.prisma[prop]
+    return Reflect.get(globalForPrisma.prisma, prop)
   },
 })

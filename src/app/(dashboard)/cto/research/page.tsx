@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, ExternalLink, Clock, DollarSign } from "lucide-react"
+import { Search, Clock, DollarSign } from "lucide-react"
 
 const mockResults = [
   {

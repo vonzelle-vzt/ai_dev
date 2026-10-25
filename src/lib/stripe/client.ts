@@ -2,7 +2,7 @@ import Stripe from "stripe"
 
 let _stripe: Stripe | null = null
 
-export function getStripe(): Stripe {
+function getStripe(): Stripe {
   if (!_stripe) {
     _stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
       typescript: true,
@@ -13,7 +13,7 @@ export function getStripe(): Stripe {
 
 export const stripe = new Proxy({} as Stripe, {
   get(_target, prop) {
-    return (getStripe() as any)[prop]
+    return Reflect.get(getStripe(), prop)
   },
 })
 
@@ -41,20 +41,5 @@ export const PLANS = {
     maxProjects: 10,
     agentHoursLimit: -1, // unlimited
     revisionRounds: 10,
-  },
-} as const
-
-export type PlanType = keyof typeof PLANS
-
-export const ADD_ONS = {
-  EXTRA_PROJECT_SLOT: {
-    name: "Extra Project Slot",
-    price: 2900,
-    priceId: process.env.STRIPE_EXTRA_PROJECT_PRICE_ID!,
-  },
-  PRIORITY_QUEUE: {
-    name: "Priority Queue",
-    price: 4900,
-    priceId: process.env.STRIPE_PRIORITY_QUEUE_PRICE_ID!,
   },
 } as const

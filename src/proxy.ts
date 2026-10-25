@@ -12,12 +12,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/og",
 ])
 
-const isCTORoute = createRouteMatcher(["/cto(.*)"])
-
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return NextResponse.next()
 
-  const { userId, orgId, orgSlug } = await auth.protect()
+  const { orgId } = await auth.protect()
 
   if (!orgId) {
     return NextResponse.redirect(new URL("/onboarding", req.url))
