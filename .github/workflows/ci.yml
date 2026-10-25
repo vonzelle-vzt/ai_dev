@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint --silent
+      - run: npx --no-install tsc --noEmit
+      # No test script exists in package.json yet; add `npm test` here when one does.
+      - run: npm run build --silent
+        env:
+          # Prisma generate/config read this at build time; no connection is made.
+          DATABASE_URL: postgresql://user:password@localhost:5432/ci
