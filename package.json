@@ -43,6 +43,7 @@
     "@types/stripe": "^8.0.416",
     "eslint": "^9",
     "eslint-config-next": "16.1.7",
+    "postcss": "^8.5.31",
     "prisma": "^7.5.0",
     "tailwindcss": "^4",
     "typescript": "^5"
