@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { Monitor, Tablet, Smartphone, MessageSquare, CheckCircle2, Send } from "lucide-react"
 
 const annotations = [
@@ -17,9 +16,7 @@ const scores = [
   { label: "Best", value: 95 },
 ]
 
-export default async function StagingReviewPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-
+export default function StagingReviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

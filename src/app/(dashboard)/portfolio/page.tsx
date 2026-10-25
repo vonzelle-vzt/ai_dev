@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Code2, ExternalLink, Star } from "lucide-react"
-import Link from "next/link"
+import { Code2, Star } from "lucide-react"
 
 const projects = [
   {

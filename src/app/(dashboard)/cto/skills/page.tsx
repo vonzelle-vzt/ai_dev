@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Plus, Star, Zap } from "lucide-react"
+import { Search, Plus, Star } from "lucide-react"
 
 const skills = [
   { name: "stripe-billing", source: "PLATFORM", tags: ["payments", "subscriptions"], successRate: 97, usageCount: 34 },

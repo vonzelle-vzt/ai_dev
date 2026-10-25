@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, Clock, Circle, ArrowRight, Bot } from "lucide-react"
+import { CheckCircle2, Clock, Circle, Bot } from "lucide-react"
 
 const revisions = [
   {
@@ -34,9 +33,7 @@ const itemStatusConfig: Record<string, { icon: typeof CheckCircle2; color: strin
   PENDING: { icon: Circle, color: "text-zinc-600" },
 }
 
-export default async function RevisionsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-
+export default function RevisionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
